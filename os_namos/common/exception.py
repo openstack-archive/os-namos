@@ -12,9 +12,19 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-from os_namos import sync
 
-RegistrationInfo = sync.RegistrationInfo
-Config = sync.Config
-register_myself = sync.register_myself
-collect_registration_info = sync.collect_registration_info
+class NamosException(Exception):
+    def __init__(self, **kwargs):
+        self.message = kwargs.get('message') or "UNKNOWN"
+        self.data = kwargs.get('data') or {}
+        self.error_code = kwargs.get('error_code') or -1
+        self.http_status_code = kwargs.get('http_status_code') or 500
+
+    def __str__(self):
+        return unicode(self.message).encode('UTF-8')
+
+    def __unicode__(self):
+        return unicode(self.message)
+
+    def __deepcopy__(self, memo):
+        return self.__class__(**self.kwargs)

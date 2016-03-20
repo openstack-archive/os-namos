@@ -12,9 +12,25 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-from os_namos import sync
+from oslo_config import cfg
+from oslo_log import log as logging
 
-RegistrationInfo = sync.RegistrationInfo
-Config = sync.Config
-register_myself = sync.register_myself
-collect_registration_info = sync.collect_registration_info
+import os_namos  # noqa
+
+PROJECT_NAME = 'namos'
+VERSION = '0.0.1'
+MESSAGE_QUEUE_CONDUCTOR_TOPIC = '%s.conductor' % PROJECT_NAME
+CONF = cfg.CONF
+
+
+def init_conf(prog):
+    CONF(project=PROJECT_NAME,
+         version=VERSION,
+         prog=prog)
+
+
+def init_log(project=PROJECT_NAME):
+    logging.register_options(cfg.CONF)
+    logging.setup(cfg.CONF,
+                  project,
+                  version=VERSION)
