@@ -21,7 +21,6 @@ import json
 import oslo_messaging
 from oslo_messaging import RemoteError
 
-from os_namos.common import config  # noqa
 from os_namos.common import exception as namos_exception
 from os_namos.common import messaging as rpc
 
@@ -54,7 +53,7 @@ class ConductorAPI(object):
             }
         )
 
-        oslo_messaging.set_transport_defaults(project)
+        oslo_messaging.set_transport_defaults('namos')
 
         self.client = rpc.get_rpc_client(version=self.RPC_API_VERSION,
                                          topic=self.topic)

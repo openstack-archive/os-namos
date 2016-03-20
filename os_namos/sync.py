@@ -68,8 +68,13 @@ def collect_registration_info():
     self = cfg.CONF
 
     def normalize_type(type):
-        if str(type).find('function'):
+        try:
+            if str(type).find('function'):
+                return 'String'
+        except TypeError:  # noqa
+            # TODO(mrkanag) why this type error occurs?
             return 'String'
+
         return type
 
     def get_host():
@@ -139,20 +144,29 @@ def update_config(config):
     pass
 
 
+# TODO(mrkanag) Remove this before production !
 if __name__ == '__main__':
-    # TODO(mrkanag) Remove this before production !
-    from os_namos.common import config
+    from oslo_config import cfg
+    from oslo_log import log as logging
 
-    config.init_log()
-    config.init_conf('test-run')
+    import os_namos  # noqa
 
-    reg_info = RegistrationInfo(
-        host='namos_development',
-        project_name=config.PROJECT_NAME,
-        prog_name='sync',
-        config_file_list=['/etc/namos/namos.conf'],
-        config_dict={})
+    PROJECT_NAME = 'namos'
+    VERSION = '0.0.1'
+    CONF = cfg.CONF
 
-    print (reg_info.__dict__)
+    def init_conf(prog):
+        CONF(project=PROJECT_NAME,
+             version=VERSION,
+             prog=prog)
 
-    print (register_myself(reg_info))
+    def init_log(project=PROJECT_NAME):
+        logging.register_options(cfg.CONF)
+        logging.setup(cfg.CONF,
+                      project,
+                      version=VERSION)
+
+    init_log()
+    init_conf('test-run')
+
+    print (register_myself())
