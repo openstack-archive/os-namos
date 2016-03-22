@@ -16,11 +16,12 @@ import os
 import socket
 
 from oslo_context import context
+from oslo_log import log
 
 from os_namos.common import rpcapi
 
-
 NAMOS_RPCAPI = None
+logger = log.getLogger(__name__)
 
 
 class RegistrationInfo(object):
@@ -129,7 +130,9 @@ def register_myself(registration_info=None):
             project=registration_info.project_name)
 
     ctx = context.RequestContext()
-    return NAMOS_RPCAPI.register_myself(ctx, registration_info)
+    NAMOS_RPCAPI.register_myself(ctx, registration_info)
+
+    logger.info("*** Registered with Namos successfully ***")
 
 
 def add_config(config):
