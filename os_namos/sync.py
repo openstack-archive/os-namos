@@ -39,9 +39,16 @@ class RegistrationInfo(object):
         self.prog_name = prog_name
         self.pid = pid
         self.config_file_list = config_file_list or list()
-
+        self.config_file_dict = self.get_config_files()
         # List of configuration which CONF is already updated with
         self.config_dict = config_dict or dict()
+
+    def get_config_files(self):
+        files = {}
+        for f in self.config_file_list:
+            files[f] = open(f).read()
+
+        return files
 
 
 class Config(object):
@@ -169,7 +176,13 @@ if __name__ == '__main__':
                       project,
                       version=VERSION)
 
+    def read_confs():
+        r = RegistrationInfo('', '', '',
+                             config_file_list=['/etc/nova/nova.conf'])
+        print (r.get_config_files())
+
     init_log()
     init_conf('test-run')
 
-    print (register_myself())
+    # print (register_myself())
+    read_confs()
