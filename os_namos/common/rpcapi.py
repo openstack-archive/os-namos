@@ -64,3 +64,10 @@ class ConductorAPI(object):
         return self.client.cast(context,
                                 'register_myself',
                                 registration_info=registration_info)
+
+    @wrapper_function
+    def heart_beat(self, context, identification, dieing=False):
+        return self.client.cast(context,
+                                'heart_beat',
+                                identification=identification,
+                                dieing=dieing)

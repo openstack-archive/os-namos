@@ -17,4 +17,5 @@ from os_namos import sync
 RegistrationInfo = sync.RegistrationInfo
 Config = sync.Config
 register_myself = sync.register_myself
+i_am_dieing = sync.i_am_dieing
 collect_registration_info = sync.collect_registration_info

@@ -14,6 +14,7 @@
 
 import os
 import socket
+import uuid
 
 from oslo_context import context
 from oslo_log import log
@@ -22,6 +23,12 @@ from os_namos.common import rpcapi
 
 NAMOS_RPCAPI = None
 logger = log.getLogger(__name__)
+
+# TODO(mrkanag) when more than one workers are reported per service component
+# Then make the IDENTIFICATION for each worker instead. Currrently its only
+# one for whole service component == PID
+IDENTIFICATION = str(uuid.uuid4())
+HEART_BEAT_STARTED = False
 
 
 class RegistrationInfo(object):
@@ -42,6 +49,7 @@ class RegistrationInfo(object):
         self.config_file_dict = self.get_config_files()
         # List of configuration which CONF is already updated with
         self.config_dict = config_dict or dict()
+        self.identification = IDENTIFICATION
 
     def get_config_files(self):
         files = {}
@@ -56,6 +64,7 @@ class Config(object):
                  name,
                  type,
                  value,
+                 group='DEFAULT',
                  help=None,
                  default_value=None,
                  required=False,
@@ -69,6 +78,7 @@ class Config(object):
         self.required = required
         self.secret = secret
         self.file = file
+        self.group = group
 
 
 def collect_registration_info():
@@ -113,20 +123,21 @@ def collect_registration_info():
         group_attr = self.GroupAttr(self, self._get_group(group_name))
         for opt_name in sorted(self._groups[group_name]._opts):
             opt = self._get_opt_info(opt_name, group_name)['opt']
-            cfg = Config(name="%s.%s" % (group_name, opt_name),
+            cfg = Config(name="%s" % opt_name,
                          type='%s' % normalize_type(opt.type),
                          value='%s' % getattr(group_attr, opt_name),
                          help='%s' % opt.help,
                          required=opt.required,
                          secret=opt.secret,
-                         default_value='%s' % opt.default)
+                         default_value='%s' % opt.default,
+                         group='%s' % group_name)
             config_dict[cfg.name] = cfg
     reg_info.config_dict = config_dict
 
     return reg_info
 
 
-def register_myself(registration_info=None):
+def register_myself(registration_info=None, start_heart_beat=True):
     global NAMOS_RPCAPI
 
     if registration_info is None:
@@ -139,7 +150,41 @@ def register_myself(registration_info=None):
     ctx = context.RequestContext()
     NAMOS_RPCAPI.register_myself(ctx, registration_info)
 
-    logger.info("*** Registered with Namos successfully ***")
+    logger.info("*** [%s ]Registered with Namos successfully. ***" %
+                registration_info.identification)
+
+    if start_heart_beat:
+        heart_beat(registration_info.identification)
+
+    return registration_info.identification
+
+
+def heart_beat(identification):
+    global HEART_BEAT_STARTED
+
+    if HEART_BEAT_STARTED:
+        return
+
+    HEART_BEAT_STARTED = True
+    from oslo_service import loopingcall
+    th = loopingcall.FixedIntervalLoopingCall(NAMOS_RPCAPI.heart_beat,
+                                              context=context.RequestContext(),
+                                              identification=identification)
+    # TODO(mrkanag) make this periods configurable
+    th.start(60, 120)
+
+    logger.info("*** [%s] HEART-BEAT with Namos is started successfully. ***" %
+                identification)
+
+
+def i_am_dieing():
+    if NAMOS_RPCAPI:
+        NAMOS_RPCAPI.heart_beat(context,
+                                NAMOS_RPCAPI,
+                                IDENTIFICATION,
+                                True)
+        logger.info("*** [%s] HEART-BEAT with Namos is stopping. ***" %
+                    IDENTIFICATION)
 
 
 def add_config(config):
@@ -184,5 +229,5 @@ if __name__ == '__main__':
     init_log()
     init_conf('test-run')
 
-    # print (register_myself())
+    print (register_myself())
     read_confs()
