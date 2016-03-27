@@ -29,6 +29,7 @@ logger = log.getLogger(__name__)
 # one for whole service component == PID
 IDENTIFICATION = str(uuid.uuid4())
 HEART_BEAT_STARTED = False
+NAMOS_RPCSERVER_STARTED = False
 
 
 class RegistrationInfo(object):
@@ -137,26 +138,43 @@ def collect_registration_info():
     return reg_info
 
 
-def register_myself(registration_info=None, start_heart_beat=True):
+def register_myself(registration_info=None,
+                    start_heart_beat=True,
+                    start_rpc_server=True):
     global NAMOS_RPCAPI
 
     if registration_info is None:
         registration_info = collect_registration_info()
 
+    import sys
+    current_module = sys.modules[__name__]
+
     if NAMOS_RPCAPI is None:
         NAMOS_RPCAPI = rpcapi.ConductorAPI(
-            project=registration_info.project_name)
+            project=registration_info.project_name,
+            host=registration_info.host,
+            identification=registration_info.identification,
+            mgr=current_module
+        )
 
     ctx = context.RequestContext()
     NAMOS_RPCAPI.register_myself(ctx, registration_info)
 
-    logger.info("*** [%s ]Registered with Namos successfully. ***" %
+    logger.info("*** [%s ]Registeration with Namos started successfully. ***" %
                 registration_info.identification)
 
     if start_heart_beat:
         heart_beat(registration_info.identification)
+    if start_rpc_server:
+        manage_me()
 
     return registration_info.identification
+
+
+def regisgration_ackw(identification):
+    # TODO(mrkanag) start the heart beat here
+    logger.info("*** [%s ]Registeration with Namos completed successfully. ***"
+                % identification)
 
 
 def heart_beat(identification):
@@ -185,6 +203,25 @@ def i_am_dieing():
                                 True)
         logger.info("*** [%s] HEART-BEAT with Namos is stopping. ***" %
                     IDENTIFICATION)
+        NAMOS_RPCAPI.stop_me()
+        logger.info("*** [%s] RPC Server for Namos is stopping. ***" %
+                    IDENTIFICATION)
+
+
+def manage_me():
+    global NAMOS_RPCSERVER_STARTED
+
+    if NAMOS_RPCSERVER_STARTED:
+        return
+
+    NAMOS_RPCSERVER_STARTED = True
+    from oslo_service import loopingcall
+    th = loopingcall.FixedIntervalLoopingCall(NAMOS_RPCAPI.manage_me)
+    # TODO(mrkanag) make this periods configurable
+    th.start(60, 0)
+
+    logger.info("*** [%s] RPC Server for Namos is started successfully. ***" %
+                IDENTIFICATION)
 
 
 def add_config(config):

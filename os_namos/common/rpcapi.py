@@ -18,6 +18,7 @@ Client side of the OSLO CONFIG NAMOS
 import functools
 
 import json
+from oslo_context import context
 import oslo_messaging
 from oslo_messaging import RemoteError
 
@@ -37,12 +38,27 @@ def wrapper_function(func):
     return wrapped
 
 
+def request_context(func):
+    @functools.wraps(func)
+    def wrapped(self, ctx, *args, **kwargs):
+        if ctx is not None and not isinstance(ctx, context.RequestContext):
+            ctx = context.RequestContext.from_dict(ctx.to_dict())
+
+        return func(self, ctx, *args, **kwargs)
+
+    return wrapped
+
+
 class ConductorAPI(object):
     RPC_API_VERSION = '1.0'
 
-    def __init__(self, project):
+    def __init__(self, host, project, identification, mgr):
         super(ConductorAPI, self).__init__()
         self.topic = 'namos.conductor'
+        self.project = project
+        self.host = host
+        self.server_topic = identification
+        self.mgr = mgr
 
         # Setup the messaging tweaks ! here
         rpc._ALIASES.update(
@@ -58,6 +74,12 @@ class ConductorAPI(object):
         self.client = rpc.get_rpc_client(version=self.RPC_API_VERSION,
                                          topic=self.topic)
 
+        self.server = rpc.get_rpc_server(host=self.host,
+                                         topic='namos.CONF.%s' %
+                                               identification,
+                                         endpoint=self,
+                                         version=self.RPC_API_VERSION)
+
     @wrapper_function
     def register_myself(self, context, registration_info):
         # TODO(mrkanag): is to be call instead of cast
@@ -71,3 +93,16 @@ class ConductorAPI(object):
                                 'heart_beat',
                                 identification=identification,
                                 dieing=dieing)
+
+    def manage_me(self):
+        self.server.start()
+
+    def stop_me(self):
+        try:
+            self.server.stop()
+        except:  # noqa
+            pass
+
+    @request_context
+    def regisgration_ackw(self, context, identification):
+        self.mgr.regisgration_ackw(identification)
