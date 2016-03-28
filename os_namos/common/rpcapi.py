@@ -100,9 +100,15 @@ class ConductorAPI(object):
     def stop_me(self):
         try:
             self.server.stop()
+            self.server.wait()
         except:  # noqa
             pass
 
     @request_context
     def regisgration_ackw(self, context, identification):
         self.mgr.regisgration_ackw(identification)
+
+    @request_context
+    def ping_me(self, context, identification):
+        identification = self.mgr.ping_me(identification)
+        return identification
