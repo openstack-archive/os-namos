@@ -262,6 +262,13 @@ def ping_me(id_):
     return id_
 
 
+def update_config_file(id_, name, content):
+    # TODO(mrkanag) backup the existing file
+    with open(name, 'w') as file:
+        file.write(content)
+        logger.info("*** CONF FILE [%s] UPDATE [%s] DONE. ***" % (name, id_))
+
+
 def add_config(config):
     pass
 

@@ -94,6 +94,10 @@ class ConductorAPI(object):
                                 identification=identification,
                                 dieing=dieing)
 
+    @wrapper_function
+    def update_config_file(self, context, identification, name, content):
+        self.mgr._update_config_file(identification, name, content)
+
     def manage_me(self):
         self.server.start()
 
