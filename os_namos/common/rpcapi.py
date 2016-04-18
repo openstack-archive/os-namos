@@ -68,7 +68,7 @@ class ConductorAPI(object):
                 '%s.openstack.common.rpc.impl_zmq' % project: 'zmq',
             }
         )
-
+        # TODO(mrkanag) Ceilometer is causing an issue with this in place.
         oslo_messaging.set_transport_defaults('namos')
 
         self.client = rpc.get_rpc_client(version=self.RPC_API_VERSION,
@@ -98,6 +98,15 @@ class ConductorAPI(object):
     def update_config_file(self, context, identification, name, content):
         self.mgr._update_config_file(identification, name, content)
 
+    @request_context
+    def regisgration_ackw(self, context, identification):
+        self.mgr.regisgration_ackw(identification)
+
+    @request_context
+    def ping_me(self, context, identification):
+        identification = self.mgr.ping_me(identification)
+        return identification
+
     def manage_me(self):
         self.server.start()
 
@@ -107,12 +116,3 @@ class ConductorAPI(object):
             self.server.wait()
         except:  # noqa
             pass
-
-    @request_context
-    def regisgration_ackw(self, context, identification):
-        self.mgr.regisgration_ackw(identification)
-
-    @request_context
-    def ping_me(self, context, identification):
-        identification = self.mgr.ping_me(identification)
-        return identification

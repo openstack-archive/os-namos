@@ -26,9 +26,6 @@ from oslo_utils import netutils
 NAMOS_RPCAPI = None
 logger = log.getLogger(__name__)
 
-# TODO(mrkanag) when more than one workers are reported per service component
-# Then make the IDENTIFICATION for each worker instead. Currrently its only
-# one for whole service component == PID
 IDENTIFICATION = str(uuid.uuid4())
 HEART_BEAT_STARTED = False
 NAMOS_RPCSERVER_STARTED = False
