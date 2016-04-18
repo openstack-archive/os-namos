@@ -4,9 +4,6 @@ os-namos
 
 Discovery agent of namos service.
 
-Please feel here a long description which must be at least 3 lines wrapped on
-80 cols, so that distribution package maintainers can use it in their packages.
-Note that this is a hard requirement.
 
 * Free software: Apache license
 * Documentation: http://docs.openstack.org/developer/os-namos
@@ -16,4 +13,12 @@ Note that this is a hard requirement.
 Features
 --------
 
-* TODO
+* Register the given OpenStack service component under namos and acknowledge it
+* Helps to find the live status of OpenStack service components
+* Helps to update the configuration files lively.
+
+How to use this agent
+---------------------
+
+* Invoke this agent from the service component console python scripts, where
+  its launched.
