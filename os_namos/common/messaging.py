@@ -64,8 +64,7 @@ def get_transport(url=None, optional=False, cache=True):
     transport = TRANSPORTS.get(cache_key)
     if not transport or not cache:
         try:
-            transport = oslo_messaging.get_transport(cfg.CONF, url,
-                                                     aliases=_ALIASES)
+            transport = oslo_messaging.get_rpc_transport(cfg.CONF, url)
         except oslo_messaging.InvalidTransportURL as e:
             if not optional or e.url:
                 # NOTE(sileht): olso.messaging is configured but unloadable
