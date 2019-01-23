@@ -64,7 +64,7 @@ def get_transport(url=None, optional=False, cache=True):
     transport = TRANSPORTS.get(cache_key)
     if not transport or not cache:
         try:
-            transport = oslo_messaging.get_transport(cfg.CONF, url,
+            transport = oslo_messaging.get_rpc_transport(cfg.CONF, url,
                                                      aliases=_ALIASES)
         except oslo_messaging.InvalidTransportURL as e:
             if not optional or e.url:
@@ -83,7 +83,7 @@ def get_rpc_server(host, topic, version, endpoint):
 
     target = oslo_messaging.Target(server=host, topic=topic, version=version)
     serializer = RequestContextSerializer(JsonPayloadSerializer())
-    transport = get_transport(optional=True)
+    transport = get_rpc_transport(optional=True)
     return oslo_messaging.get_rpc_server(transport, target,
                                          [endpoint], executor='eventlet',
                                          serializer=serializer)
@@ -95,7 +95,7 @@ def get_rpc_client(topic, version, retry=None, **kwargs):
     target = oslo_messaging.Target(version=version,
                                    topic=topic, **kwargs)
     serializer = RequestContextSerializer(JsonPayloadSerializer())
-    transport = get_transport(optional=True)
+    transport = get_rpc_transport(optional=True)
     return oslo_messaging.RPCClient(transport, target,
                                     serializer=serializer,
                                     retry=retry,
